@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="en-NG" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#1a6b3c"/>
+  <meta name="description" content="Sunrise Family Clinic & Maternity Home — Quality Healthcare in Lagos"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="SunriseRx"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg"/>
+  <link rel="apple-touch-icon" href="icons/icon.svg"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <title>Sunrise Family Clinic &amp; Maternity Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: '#1a6b3c',
+              50: '#f0faf4',
+              100: '#dcf5e7',
+              200: '#bbebcf',
+              300: '#8dd9ae',
+              400: '#58c082',
+              500: '#34a35e',
+              600: '#1a6b3c',
+              700: '#155730',
+              800: '#114527',
+              900: '#0d3620'
+            },
+            secondary: {
+              DEFAULT: '#f59e0b',
+              50: '#fffbeb',
+              500: '#f59e0b',
+              600: '#d97706'
+            },
+            accent: {
+              DEFAULT: '#0ea5e9'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui']
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://unpkg.com/dexie@latest/dist/dexie.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="clinic-config.js"></script>
+  <style>
+    :root {
+      --color-primary: #1a6b3c;
+      --color-primary-dark: #155730;
+      --color-primary-light: #23894d;
+      --color-secondary: #f59e0b;
+    }
+    body { font-family: 'Inter', sans-serif; }
+    .zone { display: none; }
+    .zone.active { display: block; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .sync-pill { transition: background-color 0.3s, color 0.3s; }
+    .chip { cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
+    .chip:active { transform: scale(0.96); }
+    .modal-backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .accordion-content.open { max-height: 2000px; }
+    input:focus, select:focus, textarea:focus { outline: none; }
+    .vital-flag-red { background-color: #fee2e2; border-color: #ef4444; }
+    .vital-flag-normal { background-color: #f0faf4; border-color: #bbebcf; }
+    .vital-input { width: 100%; border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; }
+    .vital-input:focus { outline: none; border-color: #1a6b3c; box-shadow: 0 0 0 2px rgba(26,107,60,0.15); }
+    .soap-textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.75rem; font-size: 0.875rem; resize: vertical; min-height: 80px; }
+    .soap-textarea:focus { outline: none; border-color: #1a6b3c; box-shadow: 0 0 0 2px rgba(26,107,60,0.15); }
+    .lab-check-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; font-size: 0.8rem; transition: background 0.15s; }
+    .lab-check-item:hover { background: #f0faf4; border-color: #bbebcf; }
+    .lab-check-item input[type=checkbox] { accent-color: #1a6b3c; }
+    .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.375rem; }
+    .form-input { width: 100%; border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.625rem 0.75rem; font-size: 0.875rem; }
+    .form-input:focus { outline: none; border-color: #1a6b3c; box-shadow: 0 0 0 2px rgba(26,107,60,0.15); }
+    .period-btn { padding: 0.375rem 0.875rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #6b7280; border: 1px solid #e5e7eb; background: white; cursor: pointer; }
+    .period-btn.active-period { background: #1a6b3c; color: white; border-color: #1a6b3c; }
+
+    /* Bulletproof Fallback Utility Classes (Works 100% Offline / Zero-CDN) */
+    .bg-primary-50 { background-color: #f0faf4 !important; }
+    .bg-primary-100 { background-color: #dcf5e7 !important; }
+    .bg-primary-200 { background-color: #bbebcf !important; }
+    .bg-primary-500 { background-color: #34a35e !important; }
+    .bg-primary-600 { background-color: #1a6b3c !important; }
+    .bg-primary-700 { background-color: #155730 !important; }
+    .bg-primary-800 { background-color: #114527 !important; }
+    .bg-primary-900 { background-color: #0d3620 !important; }
+    .hover\:bg-primary-700:hover { background-color: #155730 !important; }
+    .hover\:bg-primary-800:hover { background-color: #114527 !important; }
+    .text-primary-500 { color: #34a35e !important; }
+    .text-primary-600 { color: #1a6b3c !important; }
+    .text-primary-700 { color: #155730 !important; }
+    .text-primary-800 { color: #114527 !important; }
+    .border-primary-200 { border-color: #bbebcf !important; }
+    .border-primary-500 { border-color: #34a35e !important; }
+    .border-primary-600 { border-color: #1a6b3c !important; }
+
+    /* Buttons with high contrast & explicit fallbacks */
+    .btn-primary,
+    #btn-auth-submit,
+    #btn-book-submit,
+    #btn-portal-check,
+    button[type="submit"] {
+      background-color: #1a6b3c !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+    }
+    #btn-auth-submit {
+      background-color: #1a6b3c !important;
+      color: #ffffff !important;
+      display: block !important;
+      width: 100% !important;
+      padding: 0.875rem 1.25rem !important;
+      border-radius: 0.75rem !important;
+      font-size: 1rem !important;
+      font-weight: 700 !important;
+      text-align: center !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 2px 4px -1px rgba(0, 0, 0, 0.1) !important;
+      border: 1px solid #155730 !important;
+      cursor: pointer !important;
+      transition: background-color 0.2s, transform 0.1s !important;
+    }
+    #btn-auth-submit:hover {
+      background-color: #155730 !important;
+    }
+    #btn-auth-submit:active {
+      transform: scale(0.99) !important;
+    }
+
+    /* Auth Screen high contrast styling */
+    #zone-auth {
+      background: linear-gradient(135deg, #155730 0%, #1a6b3c 60%, #0d3620 100%) !important;
+      min-height: 100vh !important;
+    }
+    #zone-auth > div {
+      background: linear-gradient(135deg, #155730 0%, #1a6b3c 60%, #0d3620 100%) !important;
+    }
+
+    /* Hero section high contrast */
+    #hero {
+      background: linear-gradient(135deg, #155730 0%, #1a6b3c 50%, #0d3620 100%) !important;
+      color: #ffffff !important;
+      position: relative;
+    }
+    #hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    #hero-clinic-name {
+      color: #ffffff !important;
+      font-weight: 800 !important;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35) !important;
+    }
+    #hero-tagline {
+      color: #fef08a !important; /* Rich amber/yellow gold - ultra visible on dark green */
+      font-weight: 700 !important;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+    }
+    #hero p {
+      color: #f0faf4 !important;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    @media print { .no-print { display: none !important; } }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+<!-- ============================================================ -->
+<!-- ZONE 1: PUBLIC WEBSITE                                       -->
+<!-- ============================================================ -->
+<div id="zone-public" class="zone active">
+
+  <!-- 1. NAVIGATION BAR -->
+  <nav id="main-nav" class="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo + Clinic Name -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">SF</div>
+          <span id="nav-clinic-name" class="font-bold text-primary-700 text-sm sm:text-base leading-tight">Sunrise Family Clinic<br class="hidden sm:block"/><span class="text-gray-500 font-normal text-xs hidden sm:block">&amp; Maternity Home</span></span>
+        </div>
+        <!-- Desktop Nav Links -->
+        <div class="hidden md:flex items-center gap-6">
+          <a href="#hero" class="text-gray-600 hover:text-primary-700 font-medium text-sm transition-colors">Home</a>
+          <a href="#services" class="text-gray-600 hover:text-primary-700 font-medium text-sm transition-colors">Services</a>
+          <a href="#doctors" class="text-gray-600 hover:text-primary-700 font-medium text-sm transition-colors">Doctors</a>
+          <a href="#hmos" class="text-gray-600 hover:text-primary-700 font-medium text-sm transition-colors">HMOs</a>
+          <a href="#directions" class="text-gray-600 hover:text-primary-700 font-medium text-sm transition-colors">Contact</a>
+        </div>
+        <!-- Book + Hamburger -->
+        <div class="flex items-center gap-3">
+          <a href="#booking" class="hidden sm:inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">📋 Book Appointment</a>
+          <button id="nav-toggle" class="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors" aria-label="Toggle menu">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Mobile Menu -->
+    <div id="nav-mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 px-4 py-3 space-y-2">
+      <a href="#hero" class="block py-2 text-gray-700 font-medium hover:text-primary-700" onclick="document.getElementById('nav-mobile-menu').classList.add('hidden')">🏠 Home</a>
+      <a href="#services" class="block py-2 text-gray-700 font-medium hover:text-primary-700" onclick="document.getElementById('nav-mobile-menu').classList.add('hidden')">🏥 Services</a>
+      <a href="#doctors" class="block py-2 text-gray-700 font-medium hover:text-primary-700" onclick="document.getElementById('nav-mobile-menu').classList.add('hidden')">👨‍⚕️ Doctors</a>
+      <a href="#hmos" class="block py-2 text-gray-700 font-medium hover:text-primary-700" onclick="document.getElementById('nav-mobile-menu').classList.add('hidden')">🤝 HMOs</a>
+      <a href="#directions" class="block py-2 text-gray-700 font-medium hover:text-primary-700" onclick="document.getElementById('nav-mobile-menu').classList.add('hidden')">📍 Contact</a>
+      <a href="#booking" class="block w-full text-center bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2.5 rounded-lg mt-2" onclick="document.getElementById('nav-mobile-menu').classList.add('hidden')">📋 Book Appointment</a>
+    </div>
+  </nav>
+
+  <!-- 2. HERO SECTION -->
+  <section id="hero" style="background: linear-gradient(135deg, #155730 0%, #1a6b3c 50%, #0d3620 100%) !important; color: #ffffff !important;" class="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-700 via-primary-600 to-teal-600 pt-16">
+    <div class="relative z-10 text-center px-4 py-20 max-w-3xl mx-auto">
+      <!-- Badge -->
+      <div style="background-color: rgba(255, 255, 255, 0.18) !important; border: 1px solid rgba(255, 255, 255, 0.35) !important; color: #ffffff !important;" class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30 text-white text-sm font-semibold px-4 py-2 rounded-full mb-6">
+        🏥 Trusted Healthcare Since 2015
+      </div>
+      <!-- Heading -->
+      <h1 id="hero-clinic-name" style="color: #ffffff !important; text-shadow: 0 3px 12px rgba(0,0,0,0.45) !important;" class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-4">
+        Sunrise Family Clinic<br/>&amp; Maternity Home
+      </h1>
+      <!-- Tagline -->
+      <p id="hero-tagline" style="color: #fef08a !important; font-weight: 700 !important; text-shadow: 0 2px 6px rgba(0,0,0,0.4) !important;" class="text-xl sm:text-2xl font-bold text-amber-200 mb-4">Your Health. Our Priority. Always.</p>
+      <!-- Description -->
+      <p style="color: #f0faf4 !important; font-weight: 400 !important; text-shadow: 0 1px 4px rgba(0,0,0,0.3) !important;" class="text-green-50 text-base sm:text-lg leading-relaxed mb-10 max-w-xl mx-auto">
+        Providing compassionate, comprehensive healthcare for individuals and families across Lagos. From general outpatient care to maternity services, diagnostics, and beyond — we are here for every step of your health journey.
+      </p>
+      <!-- CTA Buttons -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-center mb-10">
+        <a id="btn-emergency" href="tel:+2348012345678" style="background-color: #ef4444 !important; color: #ffffff !important;" class="inline-flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-bold px-7 py-4 rounded-xl text-lg shadow-lg transition-colors">
+          📞 Emergency Call
+        </a>
+        <a id="btn-whatsapp" href="https://wa.me/2348012345678?text=Hello%2C%20I%20need%20to%20book%20an%20appointment%20at%20Sunrise%20Family%20Clinic" target="_blank" rel="noopener" style="background-color: #22c55e !important; color: #ffffff !important;" class="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-400 text-white font-bold px-7 py-4 rounded-xl text-lg shadow-lg transition-colors">
+          💬 WhatsApp Us
+        </a>
+      </div>
+      <!-- Open Status Badge -->
+      <div class="flex justify-center">
+        <span id="open-status-badge" style="background-color: rgba(255, 255, 255, 0.22) !important; color: #ffffff !important; border: 1px solid rgba(255,255,255,0.45) !important;" class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30 text-white font-semibold px-5 py-2.5 rounded-full text-sm">
+          ✓ Open Now
+        </span>
+      </div>
+    </div>
+    <!-- Wave Divider -->
+    <div class="absolute bottom-0 left-0 right-0 overflow-hidden leading-none">
+      <svg viewBox="0 0 1440 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" class="w-full h-16 sm:h-20">
+        <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="#ffffff"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 3. SERVICES SECTION -->
+  <section id="services" class="py-20 bg-white">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="text-center mb-4">
+        <span class="inline-block bg-primary-50 text-primary-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">What We Offer</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Our Medical Services</h2>
+        <p class="text-gray-500 mt-3 max-w-xl mx-auto">From primary care to specialist consultations, we offer a full spectrum of healthcare services under one roof.</p>
+      </div>
+      <div id="services-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10"></div>
+    </div>
+  </section>
+
+  <!-- 4. DOCTORS SECTION -->
+  <section id="doctors" class="py-20 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="text-center mb-4">
+        <span class="inline-block bg-primary-50 text-primary-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">Our Team</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Meet Our Doctors</h2>
+        <p class="text-gray-500 mt-3 max-w-xl mx-auto">Qualified, experienced physicians committed to your wellbeing.</p>
+      </div>
+      <div id="doctors-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-10"></div>
+    </div>
+  </section>
+
+  <!-- 5. HMOs SECTION -->
+  <section id="hmos" class="py-16 bg-primary-600">
+    <div class="max-w-5xl mx-auto px-4 text-center">
+      <span class="inline-block bg-white/20 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4">Insurance &amp; HMO</span>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Accepted HMOs &amp; Insurance Partners</h2>
+      <p class="text-green-100 mt-3 max-w-xl mx-auto">We accept a wide range of Health Maintenance Organisations (HMOs). Don't see yours? Call us — we may still accept it.</p>
+      <div id="hmos-grid" class="flex flex-wrap justify-center gap-3 mt-8"></div>
+      <p class="text-green-200 text-sm mt-6">Don't have HMO coverage? We offer flexible payment plans. <a href="#booking" class="underline font-semibold hover:text-white">Talk to us →</a></p>
+    </div>
+  </section>
+
+  <!-- 6. DIRECTIONS SECTION -->
+  <section id="directions" class="py-20 bg-white">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="text-center mb-12">
+        <span class="inline-block bg-primary-50 text-primary-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">Location &amp; Contact</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900">How to Find Us</h2>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <!-- Left: Address & Landmarks -->
+        <div>
+          <div class="bg-gray-50 rounded-2xl p-6 mb-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-3">📍 Our Address</h3>
+            <p id="dir-address" class="text-gray-600 leading-relaxed text-base">12 Olatunde Ayoola Avenue, Anthony Village, Lagos State, Nigeria</p>
+            <div class="mt-4">
+              <p class="text-sm font-semibold text-gray-700 mb-2">🗺️ Nearby Landmarks:</p>
+              <ul id="dir-landmarks" class="space-y-1.5 text-sm text-gray-600">
+                <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary-500 flex-shrink-0"></span>Opposite Anthony Bus Stop (Ikorodu Road)</li>
+                <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary-500 flex-shrink-0"></span>Behind Metro Supermarket, Anthony Village</li>
+                <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary-500 flex-shrink-0"></span>5 minutes from Maryland Mall, Lagos</li>
+                <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary-500 flex-shrink-0"></span>10 minutes from Lagos State University Teaching Hospital (LASUTH)</li>
+              </ul>
+            </div>
+            <a id="dir-map-btn" href="https://maps.google.com/?q=Sunrise+Family+Clinic+Anthony+Village+Lagos" target="_blank" rel="noopener" class="inline-flex items-center gap-2 mt-5 bg-primary-600 hover:bg-primary-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
+              🗺️ Open in Google Maps
+            </a>
+          </div>
+        </div>
+        <!-- Right: Contact Card -->
+        <div>
+          <div class="bg-primary-50 border border-primary-100 rounded-2xl p-6 mb-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">📞 Contact Us</h3>
+            <div class="space-y-3 mb-5">
+              <div class="flex items-center gap-3 text-gray-700">
+                <span class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 flex-shrink-0">📞</span>
+                <div>
+                  <p class="text-xs text-gray-500 font-medium">Main Line</p>
+                  <a href="tel:+2348012345678" class="font-semibold hover:text-primary-700">+234 801 234 5678</a>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 text-gray-700">
+                <span class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-600 flex-shrink-0">🚨</span>
+                <div>
+                  <p class="text-xs text-gray-500 font-medium">Emergency / 24-Hour</p>
+                  <a href="tel:+2348098765432" class="font-semibold hover:text-red-600">+234 809 876 5432</a>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 text-gray-700">
+                <span class="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">💬</span>
+                <div>
+                  <p class="text-xs text-gray-500 font-medium">WhatsApp</p>
+                  <a href="https://wa.me/2348012345678" target="_blank" class="font-semibold hover:text-green-600">+234 801 234 5678</a>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 text-gray-700">
+                <span class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">✉️</span>
+                <div>
+                  <p class="text-xs text-gray-500 font-medium">Email</p>
+                  <a href="mailto:info@sunriseclinic.ng" class="font-semibold hover:text-blue-600">info@sunriseclinic.ng</a>
+                </div>
+              </div>
+            </div>
+            <div class="flex gap-3 mb-5">
+              <a href="tel:+2348098765432" class="flex-1 inline-flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl text-sm transition-colors">📞 Emergency Call</a>
+              <a href="https://wa.me/2348012345678" target="_blank" rel="noopener" class="flex-1 inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-sm transition-colors">💬 WhatsApp</a>
+            </div>
+            <!-- Opening Hours -->
+            <h4 class="text-sm font-bold text-gray-700 mb-2">🕐 Opening Hours</h4>
+            <table id="dir-hours" class="w-full text-sm">
+              <tbody>
+                <tr class="border-b border-gray-100"><td class="py-2 text-gray-600 font-medium">Monday – Friday</td><td class="py-2 text-gray-800 font-semibold text-right">8:00 AM – 8:00 PM</td></tr>
+                <tr class="border-b border-gray-100"><td class="py-2 text-gray-600 font-medium">Saturday</td><td class="py-2 text-gray-800 font-semibold text-right">9:00 AM – 5:00 PM</td></tr>
+                <tr><td class="py-2 text-gray-600 font-medium">Sunday &amp; Public Holidays</td><td class="py-2 text-gray-800 font-semibold text-right">Emergency Only</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. BOOKING SECTION -->
+  <section id="booking" class="py-20 bg-gray-50">
+    <div class="max-w-2xl mx-auto px-4">
+      <div class="text-center mb-10">
+        <span class="inline-block bg-primary-50 text-primary-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">Appointments</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Book an Appointment / Join Queue</h2>
+        <p class="text-gray-500 mt-3">Fill the form below and we'll confirm your slot via SMS or WhatsApp.</p>
+      </div>
+      <div class="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+        <form id="booking-form" class="space-y-5" onsubmit="submitBooking(event)">
+          <!-- Full Name -->
+          <div>
+            <label class="form-label" for="book-name">Full Name <span class="text-red-500">*</span></label>
+            <input type="text" id="book-name" required placeholder="e.g. Adaeze Okonkwo" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"/>
+          </div>
+          <!-- Phone -->
+          <div>
+            <label class="form-label" for="book-phone">Phone Number <span class="text-red-500">*</span></label>
+            <input type="tel" id="book-phone" required pattern="[0-9+]{10,14}" placeholder="e.g. 08012345678" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"/>
+          </div>
+          <!-- Date & Time -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="form-label" for="book-date">Preferred Date <span class="text-red-500">*</span></label>
+              <input type="date" id="book-date" required class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"/>
+            </div>
+            <div>
+              <label class="form-label" for="book-time">Preferred Time</label>
+              <input type="time" id="book-time" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"/>
+            </div>
+          </div>
+          <!-- Department -->
+          <div>
+            <label class="form-label" for="book-dept">Department</label>
+            <select id="book-dept" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white">
+              <option value="outpatient">Outpatient Consultation</option>
+              <option value="anc">Maternity &amp; Antenatal (ANC)</option>
+              <option value="lab">Laboratory &amp; Diagnostics</option>
+              <option value="dental">Dental Clinic</option>
+              <option value="optical">Optical / Eye Clinic</option>
+              <option value="pharmacy">Pharmacy</option>
+              <option value="surgery">Surgery</option>
+            </select>
+          </div>
+          <!-- Reason -->
+          <div>
+            <label class="form-label" for="book-reason">Reason for Visit <span class="text-red-500">*</span></label>
+            <textarea id="book-reason" required rows="3" placeholder="Briefly describe your symptoms or what you'd like to see the doctor about..." class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm resize-none"></textarea>
+          </div>
+          <!-- Submit -->
+          <button type="submit" id="btn-book-submit" style="background-color: #1a6b3c !important; color: #ffffff !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important;" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-4 rounded-xl text-base transition-colors flex items-center justify-center gap-2 shadow-md">
+            📋 Book Appointment
+          </button>
+          <!-- Loading -->
+          <div id="book-loading" class="hidden flex items-center justify-center gap-3 text-primary-600 font-medium py-2">
+            <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+            Submitting your appointment...
+          </div>
+        </form>
+        <!-- Success Card -->
+        <div id="booking-success" class="hidden mt-4 bg-primary-50 border border-primary-200 rounded-xl p-6 text-center">
+          <div class="text-5xl mb-3">✅</div>
+          <h3 class="text-xl font-bold text-primary-700 mb-2">Appointment Booked!</h3>
+          <p class="text-gray-600 text-sm mb-3">Your booking has been received. We'll confirm via WhatsApp or SMS shortly.</p>
+          <div class="bg-white rounded-lg border border-primary-200 p-4 inline-block mb-3">
+            <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Your Queue Token</p>
+            <p id="success-token" class="text-2xl font-mono font-extrabold text-primary-700">TKN-001</p>
+          </div>
+          <p class="text-xs text-gray-500">Please arrive 10–15 minutes before your appointment time and show this token at reception. For enquiries call <a href="tel:+2348012345678" class="text-primary-600 font-semibold hover:underline">08012345678</a>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ZONE 2: PATIENT PORTAL (inside zone-public)                  -->
+  <!-- ============================================================ -->
+
+  <!-- 8. PORTAL SECTION -->
+  <section id="portal" class="py-20 bg-white">
+    <div class="max-w-xl mx-auto px-4">
+      <div class="text-center mb-8">
+        <span class="inline-block bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3">Patient Self-Service</span>
+        <h2 class="text-3xl font-extrabold text-gray-900">Check Your Queue Position</h2>
+        <p class="text-gray-500 mt-2 text-sm">Enter your phone number or queue token to see your current status and estimated wait time.</p>
+      </div>
+      <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div class="flex gap-3">
+          <input type="text" id="portal-search" placeholder="Enter phone number or token (e.g. TKN-014)" class="flex-1 border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"/>
+          <button id="btn-portal-check" onclick="checkPortalStatus()" style="background-color: #1a6b3c !important; color: #ffffff !important; cursor: pointer !important;" class="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-5 py-3 rounded-xl text-sm transition-colors flex-shrink-0 shadow-sm">🔍 Check</button>
+        </div>
+        <!-- Portal Results -->
+        <div id="portal-results" class="hidden mt-5 bg-gray-50 rounded-xl border border-gray-100 p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <p id="portal-patient-name" class="font-bold text-gray-800 text-lg"></p>
+              <p id="portal-token" class="font-mono text-sm text-gray-500"></p>
+            </div>
+            <span id="portal-status-badge" class="px-3 py-1 rounded-full text-xs font-bold"></span>
+          </div>
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="bg-white rounded-lg border border-gray-100 p-3 text-center">
+              <p class="text-xs text-gray-500 font-medium mb-1">Queue Position</p>
+              <p id="portal-queue-pos" class="text-2xl font-extrabold text-primary-700">#–</p>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-100 p-3 text-center">
+              <p class="text-xs text-gray-500 font-medium mb-1">Est. Wait Time</p>
+              <p id="portal-wait-time" class="text-2xl font-extrabold text-amber-600">–</p>
+            </div>
+          </div>
+          <div id="portal-prescription-note" class="hidden bg-primary-50 border border-primary-100 rounded-lg p-3 text-sm text-primary-800"></div>
+          <div id="portal-lab-note" class="hidden bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800 mt-2"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. FOOTER -->
+  <footer class="bg-gray-900 text-gray-300 py-10 no-print">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-start gap-8 mb-8">
+        <!-- Logo + Description -->
+        <div class="max-w-xs">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm">SF</div>
+            <span class="font-bold text-white text-base">Sunrise Family Clinic<br/><span class="text-gray-400 font-normal text-xs">&amp; Maternity Home</span></span>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">Quality, compassionate healthcare for every family in Lagos. Because your health is our calling.</p>
+        </div>
+        <!-- Nav Links -->
+        <div class="grid grid-cols-2 gap-x-10 gap-y-2">
+          <div>
+            <p class="text-white font-semibold text-sm mb-2">Quick Links</p>
+            <div class="space-y-1.5">
+              <a href="#hero" class="block text-sm text-gray-400 hover:text-white transition-colors">Home</a>
+              <a href="#services" class="block text-sm text-gray-400 hover:text-white transition-colors">Services</a>
+              <a href="#doctors" class="block text-sm text-gray-400 hover:text-white transition-colors">Our Doctors</a>
+              <a href="#hmos" class="block text-sm text-gray-400 hover:text-white transition-colors">HMOs</a>
+            </div>
+          </div>
+          <div>
+            <p class="text-white font-semibold text-sm mb-2">Patient</p>
+            <div class="space-y-1.5">
+              <a href="#booking" class="block text-sm text-gray-400 hover:text-white transition-colors">Book Appointment</a>
+              <a href="#portal" class="block text-sm text-gray-400 hover:text-white transition-colors">Queue Status</a>
+              <a href="#directions" class="block text-sm text-gray-400 hover:text-white transition-colors">Find Us</a>
+              <a href="tel:+2348098765432" class="block text-sm text-gray-400 hover:text-white transition-colors">Emergency</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <span id="footer-copyright" class="cursor-pointer select-none text-gray-500 text-sm hover:text-gray-400 transition-colors" title="Tap 5 times for staff access">
+          © 2025 Sunrise Family Clinic. All rights reserved. Powered by AQ MedTech Innovations.
+        </span>
+        <p class="text-xs text-gray-600 text-center sm:text-right max-w-sm">Medical Disclaimer: Information on this site is for general purposes only and does not constitute medical advice. Always consult a qualified healthcare professional.</p>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- end zone-public -->
+
+
+<!-- ============================================================ -->
+<!-- ZONE AUTH: STAFF LOGIN                                        -->
+<!-- ============================================================ -->
+<div id="zone-auth" class="zone" style="background: linear-gradient(135deg, #155730 0%, #1a6b3c 50%, #0d3620 100%) !important; min-height: 100vh !important;">
+
+  <!-- 10. STAFF LOGIN PAGE -->
+  <div style="background: linear-gradient(135deg, #155730 0%, #1a6b3c 50%, #0d3620 100%) !important;" class="min-h-screen bg-gradient-to-br from-primary-700 to-teal-700 flex items-center justify-center px-4 py-10">
+    <div class="w-full max-w-md">
+      <div class="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+        <!-- Logo -->
+        <div class="text-center mb-6">
+          <div style="background-color: #1a6b3c !important; color: #ffffff !important;" class="w-16 h-16 rounded-full bg-primary-600 flex items-center justify-center text-3xl mx-auto mb-3 shadow-md">🏥</div>
+          <h1 class="text-2xl font-extrabold text-gray-900">Staff Portal</h1>
+          <p class="text-sm text-gray-500 mt-1">Authorized Personnel Only</p>
+          <div class="mt-2 inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full">🔒 Secure Login</div>
+        </div>
+        <!-- Auth Form -->
+        <form id="auth-form" onsubmit="handleStaffLogin(event)" class="space-y-4">
+          <div>
+            <label class="form-label font-semibold text-gray-700" for="auth-email">Email Address</label>
+            <input type="email" id="auth-email" required autocomplete="username" placeholder="staff@sunriseclinic.ng" class="form-input border-gray-300 focus:border-green-700"/>
+          </div>
+          <div>
+            <label class="form-label font-semibold text-gray-700" for="auth-password">Password</label>
+            <input type="password" id="auth-password" required autocomplete="current-password" placeholder="••••••••" class="form-input border-gray-300 focus:border-green-700"/>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="auth-remember" class="w-4 h-4 rounded accent-primary-600"/>
+            <label for="auth-remember" class="text-sm text-gray-600 cursor-pointer">Remember on this device</label>
+          </div>
+          <!-- Quick 1-Click Demo Fill -->
+          <div class="pt-2 border-t border-gray-100">
+            <p class="text-xs text-gray-500 font-semibold mb-2">⚡ 1-Click Demo Accounts (Click to test):</p>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <button type="button" onclick="fillDemoLogin('doctor')" class="p-2 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 rounded-lg border border-emerald-200 font-semibold text-left transition-colors flex items-center gap-1.5 cursor-pointer">🩺 Doctor</button>
+              <button type="button" onclick="fillDemoLogin('receptionist')" class="p-2 bg-blue-50 text-blue-800 hover:bg-blue-100 rounded-lg border border-blue-200 font-semibold text-left transition-colors flex items-center gap-1.5 cursor-pointer">📋 Receptionist</button>
+              <button type="button" onclick="fillDemoLogin('cashier')" class="p-2 bg-amber-50 text-amber-800 hover:bg-amber-100 rounded-lg border border-amber-200 font-semibold text-left transition-colors flex items-center gap-1.5 cursor-pointer">💰 Cashier</button>
+              <button type="button" onclick="fillDemoLogin('director')" class="p-2 bg-purple-50 text-purple-800 hover:bg-purple-100 rounded-lg border border-purple-200 font-semibold text-left transition-colors flex items-center gap-1.5 cursor-pointer">🏥 Director</button>
+            </div>
+          </div>
+          <!-- Error -->
+          <div id="auth-error" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 font-medium"></div>
+          <!-- Submit -->
+          <button type="submit" id="btn-auth-submit" style="background-color: #1a6b3c !important; color: #ffffff !important; display: block !important; width: 100% !important; padding: 14px 20px !important; font-size: 16px !important; font-weight: 700 !important; border-radius: 12px !important; border: 1px solid #155730 !important; cursor: pointer !important; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15) !important;" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3.5 rounded-xl transition-colors mt-2 shadow-md">
+            Sign In to Staff Portal
+          </button>
+          <!-- Loading -->
+          <div id="auth-loading" class="hidden flex items-center justify-center gap-3 text-primary-600 font-medium py-2">
+            <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+            Signing in...
+          </div>
+        </form>
+        <!-- Back to public -->
+        <div class="text-center mt-6">
+          <button onclick="showZone('public')" class="text-sm text-gray-600 hover:text-green-700 font-medium transition-colors">← Back to clinic website</button>
+        </div>
+      </div>
+      <!-- Footer note -->
+      <p class="text-center text-xs text-white mt-4 opacity-80 font-medium">Powered by AQ MedTech Innovations</p>
+    </div>
+  </div>
+
+  <!-- 11. SUBSCRIPTION EXPIRED OVERLAY -->
+  <div id="subscription-expired-overlay" class="hidden fixed inset-0 z-50 bg-gradient-to-br from-red-700 to-red-900 flex items-center justify-center px-4">
+    <div class="max-w-md w-full text-center">
+      <div class="text-7xl mb-6">🔒</div>
+      <h2 class="text-3xl font-extrabold text-white mb-3">System Access Suspended</h2>
+      <p class="text-red-200 text-base leading-relaxed mb-6">Your clinic's subscription has expired or been suspended. Access to the staff portal and EMR system is currently unavailable. Please contact AQ MedTech Innovations to restore your subscription.</p>
+      <button id="vendor-contact-btn" onclick="contactVendorWhatsApp()" class="inline-flex items-center gap-2 bg-white text-red-700 font-bold px-7 py-4 rounded-xl text-base hover:bg-red-50 transition-colors shadow-lg">
+        💬 Contact AQ MedTech Support
+      </button>
+      <p class="text-red-300 text-xs mt-5">AQ MedTech Innovations — Nigeria's Healthcare Technology Partner</p>
+    </div>
+  </div>
+
+</div><!-- end zone-auth -->
+
+
+<!-- ============================================================ -->
+<!-- ZONE EMR: MICRO-EMR SYSTEM                                    -->
+<!-- ============================================================ -->
+<div id="zone-emr" class="zone">
+
+  <!-- 12. EMR TOP NAVIGATION BAR -->
+  <header class="fixed top-0 left-0 right-0 z-40 bg-white shadow-sm border-b border-gray-200 no-print">
+    <div class="max-w-screen-2xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+      <!-- Left: Logo -->
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-xs">SF</div>
+        <span class="font-bold text-primary-700 text-sm hidden sm:block">Sunrise Clinic</span>
+      </div>
+      <!-- Center: Sync Pill -->
+      <div class="flex-1 flex justify-center">
+        <span id="sync-pill" class="sync-pill inline-flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-200 text-xs font-semibold px-3 py-1.5 rounded-full">🟢 Online &amp; Synced</span>
+      </div>
+      <!-- Right: Staff Info + Signout -->
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <span id="emr-staff-name" class="text-sm font-semibold text-gray-700 hidden sm:block"></span>
+        <span id="emr-role-badge" class="text-xs font-bold bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full hidden sm:block"></span>
+        <button id="btn-signout" onclick="handleSignOut()" class="ml-1 text-xs font-semibold text-gray-500 hover:text-red-600 border border-gray-200 hover:border-red-300 px-3 py-1.5 rounded-lg transition-colors">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 13. EMR TAB NAVIGATION -->
+  <nav class="fixed top-14 left-0 right-0 z-30 bg-white border-b border-gray-200 shadow-sm no-print">
+    <div class="max-w-screen-2xl mx-auto px-4 flex gap-0 overflow-x-auto">
+      <button id="tab-reception" onclick="switchTab('reception')" class="emr-tab hidden flex-shrink-0 px-5 py-3 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-primary-700 hover:border-primary-300 transition-colors whitespace-nowrap">📋 Reception</button>
+      <button id="tab-doctor" onclick="switchTab('doctor')" class="emr-tab hidden flex-shrink-0 px-5 py-3 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-primary-700 hover:border-primary-300 transition-colors whitespace-nowrap">👨‍⚕️ Doctor's Pad</button>
+      <button id="tab-cashier" onclick="switchTab('cashier')" class="emr-tab hidden flex-shrink-0 px-5 py-3 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-primary-700 hover:border-primary-300 transition-colors whitespace-nowrap">💰 Cashier</button>
+      <button id="tab-director" onclick="switchTab('director')" class="emr-tab hidden flex-shrink-0 px-5 py-3 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-primary-700 hover:border-primary-300 transition-colors whitespace-nowrap">📊 MD Dashboard</button>
+      <button id="tab-superadmin" onclick="switchTab('superadmin')" class="emr-tab hidden flex-shrink-0 px-5 py-3 text-sm font-semibold text-gray-500 border-b-2 border-transparent hover:text-primary-700 hover:border-primary-300 transition-colors whitespace-nowrap">⚙️ Super Admin</button>
+    </div>
+  </nav>
+
+  <!-- EMR Content Area (offset by fixed header + tab nav = 56+48=104px) -->
+  <div class="pt-28">
+
+    <!-- ======================================================== -->
+    <!-- SCREEN 1: RECEPTION & TRIAGE                              -->
+    <!-- ======================================================== -->
+    <div id="screen-reception" class="tab-content p-4 max-w-6xl mx-auto">
+
+      <!-- a) Chronic Refill Alert Banner -->
+      <div id="refill-alert-banner" class="hidden mb-4 bg-amber-50 border border-amber-300 rounded-xl p-4 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">⚠️</span>
+          <div>
+            <p class="font-semibold text-amber-800 text-sm"><span id="refill-alert-count">0</span> Chronic Patients Due for Refill Today</p>
+            <p class="text-xs text-amber-600 mt-0.5">These patients have not visited in 28+ days.</p>
+          </div>
+        </div>
+        <button onclick="viewRefillList()" class="flex-shrink-0 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors">View List</button>
+      </div>
+
+      <!-- b) Patient Search -->
+      <div class="relative mb-4">
+        <input type="text" id="patient-search-input" placeholder="🔍 Search patient by name or phone number..." class="w-full border border-gray-300 rounded-xl p-4 text-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" oninput="searchPatients(this.value)"/>
+        <div id="patient-search-results" class="absolute z-10 w-full bg-white border border-gray-200 rounded-xl shadow-xl mt-1 hidden max-h-64 overflow-y-auto"></div>
+      </div>
+      <button id="btn-new-patient" onclick="document.getElementById('modal-new-patient').classList.remove('hidden')" class="mb-4 inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
+        ➕ New Patient
+      </button>
+
+      <!-- c) Online Bookings Inbox -->
+      <div id="bookings-inbox-card" class="bg-white rounded-xl shadow p-4 mb-4">
+        <h3 class="font-semibold text-gray-700 mb-3">📋 Online Bookings Inbox <span id="bookings-count" class="bg-primary-100 text-primary-700 text-xs font-bold px-2 py-0.5 rounded-full ml-1">0</span></h3>
+        <div id="bookings-inbox-table">
+          <p class="text-sm text-gray-400 py-4 text-center">No new online bookings at the moment.</p>
+        </div>
+      </div>
+
+      <!-- d) Active Patient Triage Panel -->
+      <div id="triage-panel" class="hidden bg-white rounded-xl shadow p-6 mb-4">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h3 id="triage-patient-name" class="text-xl font-bold text-gray-800"></h3>
+            <span id="triage-visit-count" class="text-sm text-gray-500"></span>
+          </div>
+          <button id="btn-clear-triage" onclick="clearTriage()" class="text-gray-400 hover:text-gray-600 text-sm flex items-center gap-1">✕ Clear</button>
+        </div>
+        <!-- Vitals Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">BP Systolic (mmHg)</label>
+            <input type="number" id="vital-bp-sys" placeholder="120" min="60" max="250" class="vital-input"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">BP Diastolic (mmHg)</label>
+            <input type="number" id="vital-bp-dia" placeholder="80" min="40" max="150" class="vital-input"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Temperature (°C)</label>
+            <input type="number" id="vital-temp" placeholder="37.0" min="30" max="43" step="0.1" class="vital-input"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Pulse Rate (bpm)</label>
+            <input type="number" id="vital-pulse" placeholder="72" min="20" max="250" class="vital-input"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Respiratory Rate (cpm)</label>
+            <input type="number" id="vital-rr" placeholder="16" min="5" max="60" class="vital-input"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Weight (kg)</label>
+            <input type="number" id="vital-weight" placeholder="70" min="1" max="300" step="0.1" class="vital-input"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">SpO2 (%)</label>
+            <input type="number" id="vital-spo2" placeholder="98" min="50" max="100" class="vital-input"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Queue Assignment</label>
+            <select id="vital-queue" class="vital-input">
+              <option value="with_doctor">👨‍⚕️ Waiting for Doctor</option>
+              <option value="anc">🤰 ANC / Maternity</option>
+              <option value="lab_only">🧪 Lab Only</option>
+            </select>
+          </div>
+        </div>
+        <!-- Camera Snap -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">📸 Snap Old Paper Folder / Lab Sheet</label>
+          <input type="file" id="paper-folder-input" accept="image/*" capture="environment" class="hidden" onchange="handlePaperFolderSnap(this)"/>
+          <button onclick="document.getElementById('paper-folder-input').click()" class="border-2 border-dashed border-gray-300 rounded-lg p-4 w-full text-gray-500 hover:border-primary-400 hover:text-primary-600 transition-colors text-sm">
+            📷 Tap to Snap Paper Folder (auto-compressed to ~80KB)
+          </button>
+          <div id="paper-folder-preview" class="mt-2 hidden flex items-center gap-3">
+            <img id="paper-folder-thumb" src="" class="h-24 w-auto rounded-lg border border-gray-200 cursor-pointer" onclick="document.getElementById('modal-photo-zoom').classList.remove('hidden')" alt="Paper folder preview"/>
+            <span class="text-xs text-green-600 font-medium">✓ Photo compressed &amp; ready</span>
+          </div>
+        </div>
+        <button id="btn-confirm-triage" onclick="confirmTriage()" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 rounded-xl transition-colors">
+          ✓ Confirm Triage &amp; Add to Queue
+        </button>
+      </div>
+
+    </div><!-- end screen-reception -->
+
+    <!-- ======================================================== -->
+    <!-- SCREEN 2: DOCTOR'S PAD                                    -->
+    <!-- ======================================================== -->
+    <div id="screen-doctor" class="tab-content">
+      <div class="flex" style="height: calc(100vh - 112px);">
+        <!-- Left Sidebar: Patient Queue -->
+        <div class="w-72 lg:w-80 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto p-4">
+          <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">👥 Patient Queue</h3>
+          <div id="doctor-queue-list">
+            <p class="text-sm text-gray-400 py-4 text-center">No patients waiting.</p>
+          </div>
+        </div>
+
+        <!-- Main Consultation Area -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+          <!-- Empty State -->
+          <div id="doctor-empty-state" class="flex flex-col items-center justify-center h-64 text-gray-400">
+            <div class="text-6xl mb-4">👨‍⚕️</div>
+            <p class="text-xl font-medium">Select a patient from the queue</p>
+            <p class="text-sm mt-1">Patients checked in by Reception will appear on the left</p>
+          </div>
+
+          <!-- Consultation Panel -->
+          <div id="consultation-panel" class="hidden">
+
+            <!-- Patient Timeline Card -->
+            <div class="bg-white rounded-xl shadow p-5 mb-4">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 id="consult-patient-name" class="text-xl font-bold text-gray-800"></h3>
+                  <div id="consult-patient-meta" class="text-sm text-gray-500 mt-1"></div>
+                </div>
+                <span id="consult-queue-token" class="bg-primary-100 text-primary-700 font-mono font-bold px-3 py-1 rounded-full text-sm flex-shrink-0 ml-3"></span>
+              </div>
+              <!-- Allergies Banner -->
+              <div id="consult-allergies-banner" class="hidden mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
+                <span class="text-red-700 font-semibold text-sm">⚠️ KNOWN ALLERGIES: </span>
+                <span id="consult-allergies-text" class="text-red-600 text-sm font-medium"></span>
+              </div>
+              <!-- Vitals Row -->
+              <div id="consult-vitals-row" class="grid grid-cols-3 md:grid-cols-7 gap-2 mt-4"></div>
+              <!-- Paper Folder Photos -->
+              <div id="consult-photos-row" class="flex gap-2 mt-3"></div>
+              <!-- Past Visits Accordion -->
+              <div id="past-visits-accordion" class="mt-4"></div>
+            </div>
+
+            <!-- SOAP Note -->
+            <div class="bg-white rounded-xl shadow p-5 mb-4">
+              <h4 class="font-semibold text-gray-700 mb-3">📝 SOAP Note</h4>
+              <!-- Quick Diagnosis Chips -->
+              <div class="mb-4">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Quick Diagnosis Chips</p>
+                <div class="flex flex-wrap gap-2" id="quick-chips">
+                  <button class="chip bg-yellow-100 text-yellow-800 border border-yellow-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-yellow-200" onclick="applyQuickChip('malaria_uncomplicated')">🦟 Uncomplicated Malaria</button>
+                  <button class="chip bg-red-100 text-red-800 border border-red-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-red-200" onclick="applyQuickChip('malaria_severe')">🚨 Severe Malaria</button>
+                  <button class="chip bg-orange-100 text-orange-800 border border-orange-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-orange-200" onclick="applyQuickChip('typhoid')">🌡️ Enteric Fever</button>
+                  <button class="chip bg-purple-100 text-purple-800 border border-purple-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-purple-200" onclick="applyQuickChip('pud')">🫃 PUD</button>
+                  <button class="chip bg-blue-100 text-blue-800 border border-blue-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-blue-200" onclick="applyQuickChip('hypertension')">❤️ Hypertension</button>
+                  <button class="chip bg-indigo-100 text-indigo-800 border border-indigo-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-indigo-200" onclick="applyQuickChip('diabetes')">🩸 DM Review</button>
+                  <button class="chip bg-cyan-100 text-cyan-800 border border-cyan-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-cyan-200" onclick="applyQuickChip('uti')">💧 UTI</button>
+                  <button class="chip bg-sky-100 text-sky-800 border border-sky-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-sky-200" onclick="applyQuickChip('urti')">😷 URTI</button>
+                  <button class="chip bg-green-100 text-green-800 border border-green-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-green-200" onclick="applyQuickChip('gastroenteritis')">🤒 Gastroenteritis</button>
+                  <button class="chip bg-pink-100 text-pink-800 border border-pink-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-pink-200" onclick="applyQuickChip('pid')">🩺 PID</button>
+                  <button class="chip bg-rose-100 text-rose-800 border border-rose-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-rose-200" onclick="applyQuickChip('anc')">🤰 ANC Visit</button>
+                </div>
+              </div>
+              <!-- SOAP Textareas -->
+              <div class="grid grid-cols-1 gap-4">
+                <div>
+                  <div class="flex justify-between items-center mb-1">
+                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide">S — Subjective</label>
+                    <button class="mic-btn text-xs text-primary-600 hover:text-primary-800 font-medium" onclick="startDictation('soap-subjective')">🎙️ Dictate</button>
+                  </div>
+                  <textarea id="soap-subjective" rows="3" placeholder="Chief complaint & patient's description of symptoms..." class="soap-textarea"></textarea>
+                </div>
+                <div>
+                  <div class="flex justify-between items-center mb-1">
+                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide">O — Objective</label>
+                    <button class="mic-btn text-xs text-primary-600 hover:text-primary-800 font-medium" onclick="startDictation('soap-objective')">🎙️ Dictate</button>
+                  </div>
+                  <textarea id="soap-objective" rows="3" placeholder="Physical examination findings, vital signs..." class="soap-textarea"></textarea>
+                </div>
+                <div>
+                  <div class="flex justify-between items-center mb-1">
+                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide">A — Assessment</label>
+                    <button class="mic-btn text-xs text-primary-600 hover:text-primary-800 font-medium" onclick="startDictation('soap-assessment')">🎙️ Dictate</button>
+                  </div>
+                  <textarea id="soap-assessment" rows="2" placeholder="Diagnosis with ICD-10 code..." class="soap-textarea"></textarea>
+                </div>
+                <div>
+                  <div class="flex justify-between items-center mb-1">
+                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wide">P — Plan</label>
+                    <button class="mic-btn text-xs text-primary-600 hover:text-primary-800 font-medium" onclick="startDictation('soap-plan')">🎙️ Dictate</button>
+                  </div>
+                  <textarea id="soap-plan" rows="2" placeholder="Treatment plan, referrals, follow-up instructions..." class="soap-textarea"></textarea>
+                </div>
+              </div>
+              <!-- Dictation Status -->
+              <div id="dictation-status" class="hidden mt-2 text-sm text-primary-600 font-medium animate-pulse">🎙️ Listening... speak clearly</div>
+            </div>
+
+            <!-- E-Prescription Builder -->
+            <div class="bg-white rounded-xl shadow p-5 mb-4">
+              <div class="flex justify-between items-center mb-3">
+                <h4 class="font-semibold text-gray-700">💊 E-Prescription</h4>
+                <button onclick="addPrescriptionRow()" class="text-sm bg-primary-50 text-primary-700 hover:bg-primary-100 px-3 py-1.5 rounded-lg font-medium">+ Add Drug</button>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-gray-200 text-left text-xs font-semibold text-gray-500 uppercase">
+                      <th class="pb-2 pr-2">Drug Name</th>
+                      <th class="pb-2 pr-2">Dose</th>
+                      <th class="pb-2 pr-2">Frequency</th>
+                      <th class="pb-2 pr-2">Duration</th>
+                      <th class="pb-2 pr-2">Amount (₦)</th>
+                      <th class="pb-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="prescription-rows"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Lab Orders -->
+            <div class="bg-white rounded-xl shadow p-5 mb-4">
+              <h4 class="font-semibold text-gray-700 mb-3">🧪 Lab Investigations</h4>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="lab-orders-grid">
+                <label class="lab-check-item"><input type="checkbox" class="lab-cb" data-lab="FBC" data-amount="2500"/> FBC <span class="text-xs text-gray-400 ml-auto">₦2,500</span></label>
+                <label class="lab-check-item"><input type="checkbox" class="lab-cb" data-lab="Malaria Parasite" data-amount="1500"/> Malaria Parasite <span class="text-xs text-gray-400 ml-auto">₦1,500</span></label>
+                <label class="lab-check-item"><input type="checkbox" class="lab-cb" data-lab="Widal Test" data-amount="2000"/> Widal Test <span class="text-xs text-gray-400 ml-auto">₦2,000</span></label>
+                <label class="lab-check-item"><input type="checkbox" class="lab-cb" data-lab="Urinalysis" data-amount="1500"/> Urinalysis <span class="text-xs text-gray-400 ml-auto">₦1,500</span></label>
+                <label class="lab-check-item"><input type="checkbox" class="lab-cb" data-lab="RBS/FBS" data-amount="1000"/> RBS/FBS <span class="text-xs text-gray-400 ml-auto">₦1,000</span></label>
+                <label class="lab-check-item"><input type="checkbox" class="lab-cb" data-lab="PCV" data-amount="800"/> PCV <span class="text-xs text-gray-400 ml-auto">₦800</span></label>
+                <label class="lab-check-item"><input type="checkbox" class="lab-cb" data-lab="USS Abdomen" data-amount="8000"/> USS Abdomen <span class="text-xs text-gray-400 ml-auto">₦8,000</span></label>
+                <label class="lab-check-item"><input type="checkbox" class="lab-cb" data-lab="LFT" data-amount="5000"/> LFT <span class="text-xs text-gray-400 ml-auto">₦5,000</span></label>
+                <label class="lab-check-item"><input type="checkbox" class="lab-cb" data-lab="E&U" data-amount="4500"/> E&amp;U/Creatinine <span class="text-xs text-gray-400 ml-auto">₦4,500</span></label>
+                <label class="lab-check-item"><input type="checkbox" class="lab-cb" data-lab="HbA1c" data-amount="6000"/> HbA1c <span class="text-xs text-gray-400 ml-auto">₦6,000</span></label>
+                <label class="lab-check-item"><input type="checkbox" class="lab-cb" data-lab="Lipid Profile" data-amount="5500"/> Lipid Profile <span class="text-xs text-gray-400 ml-auto">₦5,500</span></label>
+                <label class="lab-check-item"><input type="checkbox" class="lab-cb" data-lab="Genotype/Blood Group" data-amount="2000"/> Genotype/BG <span class="text-xs text-gray-400 ml-auto">₦2,000</span></label>
+              </div>
+              <!-- Custom Lab -->
+              <div class="mt-3 flex gap-2">
+                <input type="text" id="lab-custom-name" placeholder="Custom investigation..." class="flex-1 border border-gray-300 rounded-lg p-2 text-sm"/>
+                <input type="number" id="lab-custom-amount" placeholder="₦ Amount" class="w-32 border border-gray-300 rounded-lg p-2 text-sm"/>
+              </div>
+              <!-- Consultation Fee -->
+              <div class="mt-3 flex items-center gap-3">
+                <label class="text-sm font-medium text-gray-600">Consultation Fee (₦):</label>
+                <input type="number" id="consult-fee" value="5000" class="border border-gray-300 rounded-lg p-2 text-sm w-32"/>
+              </div>
+            </div>
+
+            <button id="btn-complete-consultation" onclick="completeConsultation()" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-4 rounded-xl text-lg transition-colors mb-6">
+              ✅ Complete Consultation &amp; Send to Cashier
+            </button>
+
+          </div><!-- end consultation-panel -->
+        </div><!-- end main area -->
+      </div>
+    </div><!-- end screen-doctor -->
+
+    <!-- ======================================================== -->
+    <!-- SCREEN 3: CASHIER & DISPENSARY                            -->
+    <!-- ======================================================== -->
+    <div id="screen-cashier" class="tab-content p-4 max-w-5xl mx-auto">
+      <h2 class="text-xl font-bold text-gray-800 mb-4">💰 Cashier &amp; Dispensary</h2>
+      <!-- Pending Bills -->
+      <div id="pending-bills-list" class="space-y-4"></div>
+      <!-- Empty State -->
+      <div id="cashier-empty" class="text-center py-16 text-gray-400">
+        <div class="text-5xl mb-3">💳</div>
+        <p class="font-medium text-lg">No pending bills</p>
+        <p class="text-sm mt-1">Patients sent by doctors will appear here</p>
+      </div>
+
+      <!-- Bill Card Template (injected by JS; shown here as reference HTML structure) -->
+      <!--
+      <div class="bg-white rounded-xl shadow p-5 border border-gray-100">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <p class="font-bold text-gray-800 text-lg">[Patient Name]</p>
+            <p class="text-xs text-gray-400 mt-0.5">[Date/Time] · [Queue Token]</p>
+          </div>
+          <span class="bg-amber-100 text-amber-700 font-bold text-xs px-3 py-1 rounded-full">Pending</span>
+        </div>
+        [Itemized table]
+        [Payment method tabs: Cash / POS / Bank Transfer]
+        [Transfer reference input if Bank Transfer]
+        [Bank name input if Bank Transfer]
+        [Total amount display — large bold]
+        [Confirm Payment button]
+        [Receipt + WhatsApp Summary buttons after confirmation]
+        [Mark as Chronic/ANC toggle]
+      </div>
+      -->
+    </div><!-- end screen-cashier -->
+
+    <!-- ======================================================== -->
+    <!-- SCREEN 4: MD DASHBOARD                                    -->
+    <!-- ======================================================== -->
+    <div id="screen-director" class="tab-content p-4 max-w-6xl mx-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-gray-800">📊 Medical Director Dashboard</h2>
+        <div class="flex gap-2">
+          <button onclick="initDirectorDashboard('today')" id="period-today" class="period-btn active-period">Today</button>
+          <button onclick="initDirectorDashboard('week')" id="period-week" class="period-btn">This Week</button>
+          <button onclick="initDirectorDashboard('month')" id="period-month" class="period-btn">This Month</button>
+        </div>
+      </div>
+
+      <!-- Revenue Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow p-5 border-l-4 border-primary-500">
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Revenue</p>
+          <p id="rev-total" class="text-2xl font-bold text-gray-800 mt-1">₦0</p>
+          <p id="rev-visit-count" class="text-xs text-gray-400 mt-1">0 patients</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-500">
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Cash in Hand</p>
+          <p id="rev-cash" class="text-2xl font-bold text-green-700 mt-1">₦0</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">POS Terminal</p>
+          <p id="rev-pos" class="text-2xl font-bold text-blue-700 mt-1">₦0</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-5 border-l-4 border-purple-500">
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Bank Transfers</p>
+          <p id="rev-transfer" class="text-2xl font-bold text-purple-700 mt-1">₦0</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap gap-3 mb-6">
+        <button onclick="document.getElementById('modal-locum').classList.remove('hidden')" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg font-medium text-sm transition-colors">🔑 Generate 24-Hr Locum Login</button>
+        <button onclick="exportCSV()" class="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg font-medium text-sm transition-colors">📥 Export CSV Backup</button>
+      </div>
+
+      <!-- Recent Payments Table -->
+      <div class="bg-white rounded-xl shadow overflow-hidden">
+        <div class="p-4 border-b border-gray-100">
+          <h3 class="font-semibold text-gray-700">Recent Payments</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+              <tr>
+                <th class="px-4 py-3 text-left">Receipt #</th>
+                <th class="px-4 py-3 text-left">Patient</th>
+                <th class="px-4 py-3 text-left">Time</th>
+                <th class="px-4 py-3 text-left">Method</th>
+                <th class="px-4 py-3 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody id="recent-payments-table">
+              <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400 text-sm">No payments recorded for this period.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- end screen-director -->
+
+    <!-- ======================================================== -->
+    <!-- SCREEN 5: SUPER ADMIN                                     -->
+    <!-- ======================================================== -->
+    <div id="screen-superadmin" class="tab-content p-4 max-w-5xl mx-auto">
+      <h2 class="text-xl font-bold text-gray-800 mb-6">⚙️ Super Admin — Clinic Management</h2>
+
+      <!-- Register New Clinic -->
+      <div class="bg-white rounded-xl shadow p-6 mb-6">
+        <h3 class="font-semibold text-gray-700 mb-4">➕ Register New Clinic</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">Clinic Name</label>
+            <input type="text" id="sa-clinic-name" placeholder="e.g. Sunrise Family Clinic" class="form-input"/>
+          </div>
+          <div>
+            <label class="form-label">URL Slug</label>
+            <input type="text" id="sa-clinic-slug" placeholder="e.g. sunrise-clinic" class="form-input"/>
+          </div>
+          <div>
+            <label class="form-label">Subscription Plan</label>
+            <select id="sa-plan" class="form-input bg-white">
+              <option value="website_only">Tier 1 — Website Only</option>
+              <option value="standard" selected>Tier 2 — Standard EMR</option>
+              <option value="enterprise">Tier 3 — VIP Enterprise</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Contact Email</label>
+            <input type="email" id="sa-clinic-email" placeholder="admin@clinic.ng" class="form-input"/>
+          </div>
+        </div>
+        <button onclick="registerNewClinic()" class="mt-4 bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-lg font-medium text-sm transition-colors">Register Clinic</button>
+      </div>
+
+      <!-- All Clinics Table -->
+      <div class="bg-white rounded-xl shadow overflow-hidden">
+        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+          <h3 class="font-semibold text-gray-700">All Clinics</h3>
+          <button onclick="initSuperAdmin()" class="text-sm text-primary-600 hover:underline">↻ Refresh</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+              <tr>
+                <th class="px-4 py-3 text-left">Name</th>
+                <th class="px-4 py-3 text-left">Plan</th>
+                <th class="px-4 py-3 text-left">Created</th>
+                <th class="px-4 py-3 text-center">Active</th>
+                <th class="px-4 py-3 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="clinics-table-body">
+              <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400 text-sm">No clinics registered yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- end screen-superadmin -->
+
+  </div><!-- end pt-28 wrapper -->
+</div><!-- end zone-emr -->
+
+
+<!-- ============================================================ -->
+<!-- MODALS                                                        -->
+<!-- ============================================================ -->
+
+<!-- 19. NEW PATIENT MODAL -->
+<div id="modal-new-patient" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="document.getElementById('modal-new-patient').classList.add('hidden')"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-screen overflow-y-auto p-6">
+    <div class="flex justify-between items-center mb-5">
+      <h3 class="text-lg font-bold text-gray-900">➕ New Patient Registration</h3>
+      <button onclick="document.getElementById('modal-new-patient').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl font-bold leading-none">✕</button>
+    </div>
+    <form id="new-patient-form" onsubmit="saveNewPatient(event)" class="space-y-4">
+      <div>
+        <label class="form-label">Full Name <span class="text-red-500">*</span></label>
+        <input type="text" id="np-name" required placeholder="Patient's full name" class="form-input"/>
+      </div>
+      <div>
+        <label class="form-label">Phone Number <span class="text-red-500">*</span></label>
+        <input type="tel" id="np-phone" required placeholder="e.g. 08012345678" pattern="[0-9+]{10,14}" class="form-input"/>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="form-label">Sex</label>
+          <select id="np-sex" class="form-input bg-white">
+            <option value="">Select...</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Date of Birth</label>
+          <input type="date" id="np-dob" class="form-input"/>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="form-label">Blood Group</label>
+          <select id="np-blood-group" class="form-input bg-white">
+            <option value="">Unknown</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Genotype</label>
+          <select id="np-genotype" class="form-input bg-white">
+            <option value="">Unknown</option>
+            <option value="AA">AA</option>
+            <option value="AS">AS</option>
+            <option value="SS">SS</option>
+            <option value="AC">AC</option>
+            <option value="SC">SC</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Known Allergies</label>
+        <input type="text" id="np-allergies" placeholder="e.g. Penicillin, Sulpha drugs — or 'None Known'" class="form-input"/>
+      </div>
+      <div class="border-t border-gray-100 pt-4">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Next of Kin</p>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">NOK Full Name</label>
+            <input type="text" id="np-nok-name" placeholder="Next of kin name" class="form-input"/>
+          </div>
+          <div>
+            <label class="form-label">NOK Phone</label>
+            <input type="tel" id="np-nok-phone" placeholder="NOK phone number" class="form-input"/>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" id="btn-save-patient" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-xl transition-colors">💾 Save Patient</button>
+        <button type="button" onclick="document.getElementById('modal-new-patient').classList.add('hidden')" class="flex-1 border border-gray-300 text-gray-600 hover:bg-gray-50 font-semibold py-3 rounded-xl transition-colors">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 20. PHOTO ZOOM MODAL -->
+<div id="modal-photo-zoom" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="document.getElementById('modal-photo-zoom').classList.add('hidden')"></div>
+  <div class="relative max-w-3xl w-full">
+    <button onclick="document.getElementById('modal-photo-zoom').classList.add('hidden')" class="absolute -top-10 right-0 text-white font-bold text-2xl hover:text-gray-300">✕</button>
+    <img id="zoom-photo-img" src="" class="w-full max-h-screen object-contain rounded-xl shadow-2xl" alt="Zoomed document photo"/>
+  </div>
+</div>
+
+<!-- 21. LOCUM LOGIN MODAL -->
+<div id="modal-locum" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="document.getElementById('modal-locum').classList.add('hidden')"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+    <div class="flex justify-between items-center mb-5">
+      <h3 class="text-lg font-bold text-gray-900">🔑 Generate 24-Hr Locum Login</h3>
+      <button onclick="document.getElementById('modal-locum').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-xl font-bold">✕</button>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="form-label">Doctor Full Name <span class="text-red-500">*</span></label>
+        <input type="text" id="locum-doctor-name" placeholder="e.g. Dr. Emeka Obi" class="form-input"/>
+      </div>
+      <div>
+        <label class="form-label">Specialty / Department</label>
+        <input type="text" id="locum-specialty" placeholder="e.g. General Practitioner" class="form-input"/>
+      </div>
+      <button id="btn-gen-locum" onclick="generateLocumCredentials()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition-colors">Generate Credentials</button>
+      <!-- Result -->
+      <div id="locum-credentials" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <p class="text-xs font-bold text-amber-700 uppercase tracking-wide mb-2">24-Hour Temporary Credentials</p>
+        <div class="space-y-2 font-mono text-sm">
+          <div class="flex justify-between items-center bg-white rounded-lg px-3 py-2 border border-amber-100">
+            <span class="text-gray-500 text-xs">Email:</span>
+            <span id="locum-cred-email" class="font-bold text-gray-800 select-all"></span>
+          </div>
+          <div class="flex justify-between items-center bg-white rounded-lg px-3 py-2 border border-amber-100">
+            <span class="text-gray-500 text-xs">Password:</span>
+            <span id="locum-cred-password" class="font-bold text-gray-800 select-all"></span>
+          </div>
+          <div class="flex justify-between items-center bg-white rounded-lg px-3 py-2 border border-amber-100">
+            <span class="text-gray-500 text-xs">Expires:</span>
+            <span id="locum-cred-expiry" class="font-bold text-amber-700 text-xs"></span>
+          </div>
+        </div>
+        <button onclick="sendLocumCredentialsWhatsApp()" class="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors">📲 Send via WhatsApp</button>
+        <p class="text-xs text-amber-600 mt-2 text-center">These credentials expire in exactly 24 hours and grant Doctor-level access only.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 22. RECEIPT MODAL -->
+<div id="modal-receipt" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="modal-backdrop absolute inset-0" onclick="document.getElementById('modal-receipt').classList.add('hidden')"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+    <!-- Receipt Header -->
+    <div class="text-center mb-5 pb-4 border-b border-dashed border-gray-300">
+      <div class="w-12 h-12 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-sm mx-auto mb-2">SF</div>
+      <h3 id="receipt-clinic-name" class="font-bold text-gray-900 text-base">Sunrise Family Clinic &amp; Maternity Home</h3>
+      <p class="text-xs text-gray-500">12 Olatunde Ayoola Avenue, Anthony Village, Lagos</p>
+      <p class="text-xs text-gray-500">Tel: 08012345678</p>
+    </div>
+    <!-- Receipt Details -->
+    <div class="space-y-2 mb-4">
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-500 font-medium">Receipt #:</span>
+        <span id="receipt-number" class="font-mono font-bold text-gray-800"></span>
+      </div>
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-500 font-medium">Patient:</span>
+        <span id="receipt-patient-name" class="font-semibold text-gray-800"></span>
+      </div>
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-500 font-medium">Date &amp; Time:</span>
+        <span id="receipt-datetime" class="text-gray-700"></span>
+      </div>
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-500 font-medium">Payment Method:</span>
+        <span id="receipt-payment-method" class="font-semibold text-gray-800 capitalize"></span>
+      </div>
+    </div>
+    <!-- Itemized List -->
+    <div class="bg-gray-50 rounded-xl p-4 mb-4">
+      <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Items</p>
+      <div id="receipt-items" class="space-y-2 text-sm"></div>
+    </div>
+    <!-- Total -->
+    <div class="flex justify-between items-center bg-primary-600 text-white rounded-xl px-5 py-4 mb-5">
+      <span class="font-bold text-base">TOTAL PAID</span>
+      <span id="receipt-total" class="font-extrabold text-2xl"></span>
+    </div>
+    <!-- Buttons -->
+    <div class="flex gap-3">
+      <button onclick="window.print()" class="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2.5 rounded-xl text-sm transition-colors">🖨️ Print</button>
+      <button onclick="document.getElementById('modal-receipt').classList.add('hidden')" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 rounded-xl text-sm transition-colors">Close</button>
+    </div>
+    <p class="text-xs text-gray-400 text-center mt-3">Thank you for choosing Sunrise Family Clinic. Get well soon! 💚</p>
+  </div>
+</div>
+
+<!-- 23. iOS INSTALL BANNER -->
+<div id="ios-install-banner" class="hidden fixed bottom-0 left-0 right-0 z-50 no-print">
+  <div class="bg-white border-t border-gray-200 shadow-xl px-5 py-4">
+    <div class="max-w-lg mx-auto flex items-start justify-between gap-4">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">SF</div>
+        <div>
+          <p class="font-bold text-gray-900 text-sm">Install Clinic App</p>
+          <p class="text-xs text-gray-500 mt-0.5">1. Tap the Share icon <strong>⬆</strong> in Safari</p>
+          <p class="text-xs text-gray-500">2. Tap <strong>"Add to Home Screen"</strong></p>
+        </div>
+      </div>
+      <button onclick="document.getElementById('ios-install-banner').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 font-bold text-xl flex-shrink-0 leading-none mt-0.5">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- 24. ANDROID INSTALL FAB -->
+<button id="android-install-btn" class="hidden fixed bottom-6 right-6 z-50 bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-3 rounded-full shadow-xl flex items-center gap-2 text-sm transition-all hover:scale-105 no-print" onclick="triggerAndroidInstall()">
+  📲 Install App
+</button>
+
+
+<!-- ============================================================ -->
+<!-- SCRIPTS                                                       -->
+<!-- ============================================================ -->
+<script>
+  // ── Hamburger toggle ──────────────────────────────────────────
+  const navToggle = document.getElementById('nav-toggle');
+  const navMobileMenu = document.getElementById('nav-mobile-menu');
+  if (navToggle) {
+    navToggle.addEventListener('click', () => {
+      navMobileMenu.classList.toggle('hidden');
+    });
+  }
+
+  // ── Zone switcher (used by app.js and inline onclick) ─────────
+  function showZone(zone) {
+    document.querySelectorAll('.zone').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById('zone-' + zone);
+    if (target) target.classList.add('active');
+  }
+
+  // ── Secret admin tap counter (footer copyright) ───────────────
+  let secretTapCount = 0;
+  let secretTapTimer = null;
+  const footerCopyright = document.getElementById('footer-copyright');
+  if (footerCopyright) {
+    footerCopyright.addEventListener('click', () => {
+      secretTapCount++;
+      clearTimeout(secretTapTimer);
+      secretTapTimer = setTimeout(() => { secretTapCount = 0; }, 2000);
+      if (secretTapCount >= 5) {
+        secretTapCount = 0;
+        showZone('auth');
+        window.scrollTo(0, 0);
+      }
+    });
+  }
+
+  // ── Open/Closed status badge ──────────────────────────────────
+  function updateOpenStatus() {
+    const badge = document.getElementById('open-status-badge');
+    if (!badge) return;
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun, 6=Sat
+    const hour = now.getHours();
+    let isOpen = false;
+    if (day >= 1 && day <= 5 && hour >= 8 && hour < 20) isOpen = true;
+    if (day === 6 && hour >= 9 && hour < 17) isOpen = true;
+    badge.textContent = isOpen ? '✓ Open Now' : '⏰ Closed';
+    badge.className = isOpen
+      ? 'inline-flex items-center gap-2 bg-green-500/30 backdrop-blur-sm border border-green-400/50 text-white font-semibold px-5 py-2.5 rounded-full text-sm'
+      : 'inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 text-green-100 font-semibold px-5 py-2.5 rounded-full text-sm';
+  }
+  updateOpenStatus();
+  setInterval(updateOpenStatus, 60000);
+
+  // ── Booking form submission (delegated to app.js) ─────────────
+  function submitBooking(e) {
+    e.preventDefault();
+    if (typeof window.handleBookingSubmit === 'function') {
+      window.handleBookingSubmit(e);
+    } else {
+      // Fallback: show success with mock token
+      document.getElementById('booking-form').classList.add('hidden');
+      const token = 'TKN-' + String(Math.floor(Math.random() * 900) + 100);
+      document.getElementById('success-token').textContent = token;
+      document.getElementById('booking-success').classList.remove('hidden');
+    }
+  }
+
+  // ── Portal status check ───────────────────────────────────────
+  function checkPortalStatus() {
+    const q = document.getElementById('portal-search').value.trim();
+    if (!q) return;
+    if (typeof window.lookupPortalStatus === 'function') {
+      window.lookupPortalStatus(q);
+    } else {
+      // Fallback demo
+      const resultsDiv = document.getElementById('portal-results');
+      resultsDiv.classList.remove('hidden');
+      document.getElementById('portal-patient-name').textContent = 'Demo Patient';
+      document.getElementById('portal-token').textContent = q.toUpperCase().startsWith('TKN') ? q.toUpperCase() : 'TKN-???';
+      document.getElementById('portal-queue-pos').textContent = '#3';
+      document.getElementById('portal-wait-time').textContent = '~15 min';
+      const sb = document.getElementById('portal-status-badge');
+      sb.textContent = 'Waiting';
+      sb.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700';
+    }
+  }
+  document.getElementById('portal-search').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkPortalStatus();
+  });
+
+  // ── EMR Tab switcher ──────────────────────────────────────────
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.emr-tab').forEach(btn => {
+      btn.classList.remove('text-primary-700', 'border-primary-600');
+      btn.classList.add('text-gray-500', 'border-transparent');
+    });
+    const content = document.getElementById('screen-' + tab);
+    if (content) content.classList.add('active');
+    const btn = document.getElementById('tab-' + tab);
+    if (btn) {
+      btn.classList.remove('text-gray-500', 'border-transparent');
+      btn.classList.add('text-primary-700', 'border-primary-600');
+    }
+    if (typeof window.onTabSwitch === 'function') window.onTabSwitch(tab);
+  }
+
+  // ── Patient search (delegated to app.js) ─────────────────────
+  function searchPatients(query) {
+    if (typeof window.handlePatientSearch === 'function') {
+      window.handlePatientSearch(query);
+    } else {
+      const results = document.getElementById('patient-search-results');
+      if (!query || query.length < 2) { results.classList.add('hidden'); return; }
+      results.innerHTML = '<div class="p-3 text-sm text-gray-400">Start typing to search patients...</div>';
+      results.classList.remove('hidden');
+    }
+  }
+
+  // ── Clear triage panel ────────────────────────────────────────
+  function clearTriage() {
+    document.getElementById('triage-panel').classList.add('hidden');
+    document.getElementById('patient-search-input').value = '';
+    document.getElementById('patient-search-results').classList.add('hidden');
+    ['vital-bp-sys','vital-bp-dia','vital-temp','vital-pulse','vital-rr','vital-weight','vital-spo2'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+  }
+
+  // ── Confirm triage ────────────────────────────────────────────
+  function confirmTriage() {
+    if (typeof window.handleConfirmTriage === 'function') {
+      window.handleConfirmTriage();
+    }
+  }
+
+  // ── Prescription row builder ──────────────────────────────────
+  function addPrescriptionRow() {
+    const tbody = document.getElementById('prescription-rows');
+    const rowIdx = tbody.rows.length;
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-gray-100';
+    tr.innerHTML = `
+      <td class="py-1.5 pr-2"><input type="text" placeholder="Drug name..." class="w-full border border-gray-200 rounded px-2 py-1 text-sm focus:border-primary-400 outline-none" data-field="drug"/></td>
+      <td class="py-1.5 pr-2"><input type="text" placeholder="e.g. 500mg" class="w-24 border border-gray-200 rounded px-2 py-1 text-sm focus:border-primary-400 outline-none" data-field="dose"/></td>
+      <td class="py-1.5 pr-2">
+        <select class="border border-gray-200 rounded px-2 py-1 text-sm focus:border-primary-400 outline-none bg-white" data-field="frequency">
+          <option>Once daily</option>
+          <option>Twice daily</option>
+          <option>Three times daily</option>
+          <option>Four times daily</option>
+          <option>Every 8 hours</option>
+          <option>Every 12 hours</option>
+          <option>Stat (Once)</option>
+          <option>As needed (PRN)</option>
+          <option>At bedtime</option>
+        </select>
+      </td>
+      <td class="py-1.5 pr-2"><input type="text" placeholder="e.g. 5 days" class="w-24 border border-gray-200 rounded px-2 py-1 text-sm focus:border-primary-400 outline-none" data-field="duration"/></td>
+      <td class="py-1.5 pr-2"><input type="number" placeholder="0" min="0" class="w-24 border border-gray-200 rounded px-2 py-1 text-sm focus:border-primary-400 outline-none" data-field="amount"/></td>
+      <td class="py-1.5"><button onclick="this.closest('tr').remove()" class="text-red-400 hover:text-red-600 font-bold px-1">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  // ── Voice dictation ───────────────────────────────────────────
+  let currentDictationField = null;
+  let recognition = null;
+  function startDictation(fieldId) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Voice dictation is not supported in this browser. Please use Chrome or Safari.');
+      return;
+    }
+    if (recognition) { recognition.stop(); recognition = null; }
+    currentDictationField = fieldId;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-NG';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    document.getElementById('dictation-status').classList.remove('hidden');
+    recognition.onresult = (e) => {
+      const transcript = e.results[0][0].transcript;
+      const textarea = document.getElementById(fieldId);
+      if (textarea) textarea.value = (textarea.value ? textarea.value + ' ' : '') + transcript;
+      document.getElementById('dictation-status').classList.add('hidden');
+    };
+    recognition.onerror = () => document.getElementById('dictation-status').classList.add('hidden');
+    recognition.onend = () => document.getElementById('dictation-status').classList.add('hidden');
+    recognition.start();
+  }
+
+  // ── Quick diagnosis chips ─────────────────────────────────────
+  const QUICK_CHIPS = {
+    malaria_uncomplicated: {
+      assessment: 'Uncomplicated Malaria (B54)',
+      plan: 'Artemether-Lumefantrine 80/480mg twice daily x 3 days. Paracetamol 1g TDS PRN. Hydration. Review in 3 days or earlier if worsening.',
+      drugs: [
+        { drug: 'Artemether/Lumefantrine (Coartem) 80/480mg', dose: '4 tabs', frequency: 'Twice daily', duration: '3 days', amount: 4500 },
+        { drug: 'Paracetamol 1000mg', dose: '1 tab', frequency: 'Three times daily', duration: '5 days', amount: 500 }
+      ]
+    },
+    malaria_severe: {
+      assessment: 'Severe Malaria — Plasmodium falciparum (B50)',
+      plan: 'IV Artesunate 2.4mg/kg stat, then at 12h and 24h, then daily. IV fluids. Strict I/O chart. Urgently review electrolytes and blood glucose. Consider referral if no improvement in 24h.',
+      drugs: [
+        { drug: 'IV Artesunate', dose: '2.4mg/kg', frequency: 'Stat, then at 12h & 24h', duration: 'As directed', amount: 15000 },
+        { drug: 'IV Normal Saline 0.9%', dose: '500ml', frequency: 'Twice daily', duration: '2 days', amount: 2000 }
+      ]
+    },
+    typhoid: {
+      assessment: 'Enteric Fever (Typhoid) — A01.0',
+      plan: 'Ciprofloxacin 500mg BD x 14 days. Metronidazole 400mg TDS if diarrhoea. Paracetamol PRN. Light diet. Adequate hydration. Stool culture if available.',
+      drugs: [
+        { drug: 'Ciprofloxacin 500mg', dose: '1 tab', frequency: 'Twice daily', duration: '14 days', amount: 3500 },
+        { drug: 'Metronidazole 400mg', dose: '1 tab', frequency: 'Three times daily', duration: '7 days', amount: 1000 },
+        { drug: 'Paracetamol 1000mg', dose: '1 tab', frequency: 'As needed (PRN)', duration: '5 days', amount: 500 }
+      ]
+    },
+    pud: {
+      assessment: 'Peptic Ulcer Disease (K27.9)',
+      plan: 'Omeprazole 20mg OD AC. Metronidazole 400mg TDS x 7 days. Amoxicillin 500mg TDS x 7 days (if H.pylori suspected). Avoid NSAIDs, alcohol. Light meals.',
+      drugs: [
+        { drug: 'Omeprazole 20mg', dose: '1 cap', frequency: 'Once daily', duration: '28 days', amount: 1500 },
+        { drug: 'Metronidazole 400mg', dose: '1 tab', frequency: 'Three times daily', duration: '7 days', amount: 1000 },
+        { drug: 'Amoxicillin 500mg', dose: '1 cap', frequency: 'Three times daily', duration: '7 days', amount: 1200 }
+      ]
+    },
+    hypertension: {
+      assessment: 'Essential Hypertension (I10)',
+      plan: 'Amlodipine 5mg OD. Lifestyle: low-sodium diet, regular exercise, weight loss. Monitor BP weekly. Return for review in 1 month.',
+      drugs: [
+        { drug: 'Amlodipine 5mg', dose: '1 tab', frequency: 'Once daily', duration: '30 days', amount: 1800 }
+      ]
+    },
+    diabetes: {
+      assessment: 'Type 2 Diabetes Mellitus — Review (E11)',
+      plan: 'Continue Metformin 500mg BD. Reinforce dietary compliance. Check HbA1c. Screen for complications: eyes, kidneys, feet. BP monitoring. Return in 1 month.',
+      drugs: [
+        { drug: 'Metformin 500mg', dose: '1 tab', frequency: 'Twice daily', duration: '30 days', amount: 1500 }
+      ]
+    },
+    uti: {
+      assessment: 'Urinary Tract Infection (N39.0)',
+      plan: 'Nitrofurantoin 100mg BD x 5 days. Increase fluid intake. Urine C&S if recurrent. Refer to gynaecology if symptoms persist.',
+      drugs: [
+        { drug: 'Nitrofurantoin 100mg', dose: '1 cap', frequency: 'Twice daily', duration: '5 days', amount: 1800 }
+      ]
+    },
+    urti: {
+      assessment: 'Upper Respiratory Tract Infection (J06.9)',
+      plan: 'Paracetamol 1g TDS. Vitamin C 500mg OD. Nasal decongestant if congested. Antibiotics only if bacterial superinfection suspected. Adequate rest and hydration. Return if no improvement in 5 days.',
+      drugs: [
+        { drug: 'Paracetamol 1000mg', dose: '1 tab', frequency: 'Three times daily', duration: '5 days', amount: 500 },
+        { drug: 'Vitamin C 500mg', dose: '1 tab', frequency: 'Once daily', duration: '7 days', amount: 500 }
+      ]
+    },
+    gastroenteritis: {
+      assessment: 'Acute Gastroenteritis (A09)',
+      plan: 'ORS sachets after each loose stool. Metronidazole 400mg TDS x 5 days. Zinc 20mg OD x 10 days. Light BRAT diet. Oral rehydration. Return if unable to tolerate orally.',
+      drugs: [
+        { drug: 'ORS Sachets', dose: '1 sachet in 1L water', frequency: 'After each loose stool', duration: '5 days', amount: 300 },
+        { drug: 'Metronidazole 400mg', dose: '1 tab', frequency: 'Three times daily', duration: '5 days', amount: 1000 },
+        { drug: 'Zinc Sulfate 20mg', dose: '1 tab', frequency: 'Once daily', duration: '10 days', amount: 500 }
+      ]
+    },
+    pid: {
+      assessment: 'Pelvic Inflammatory Disease (N73.0)',
+      plan: 'Metronidazole 400mg TDS x 14 days. Doxycycline 100mg BD x 14 days. Ceftriaxone 250mg IM stat. Advise abstinence or partner treatment. Review in 72 hours.',
+      drugs: [
+        { drug: 'Metronidazole 400mg', dose: '1 tab', frequency: 'Three times daily', duration: '14 days', amount: 2000 },
+        { drug: 'Doxycycline 100mg', dose: '1 cap', frequency: 'Twice daily', duration: '14 days', amount: 1500 },
+        { drug: 'Ceftriaxone 250mg IM', dose: '250mg', frequency: 'Stat (Once)', duration: 'Once', amount: 2500 }
+      ]
+    },
+    anc: {
+      assessment: 'Routine Antenatal Care Visit',
+      plan: 'Haematinics: FeSO4 + Folic Acid OD. Routine ANC investigations. Blood pressure and weight monitoring. Fetal heart rate auscultation. Next ANC visit in 4 weeks (or as per schedule).',
+      drugs: [
+        { drug: 'Ferrous Sulphate + Folic Acid', dose: '1 tab', frequency: 'Once daily', duration: '30 days', amount: 800 },
+        { drug: 'Calcium Carbonate 600mg', dose: '1 tab', frequency: 'Twice daily', duration: '30 days', amount: 1000 }
+      ]
+    }
+  };
+
+  function applyQuickChip(key) {
+    const chip = QUICK_CHIPS[key];
+    if (!chip) return;
+    if (chip.assessment) {
+      const el = document.getElementById('soap-assessment');
+      if (el) el.value = chip.assessment;
+    }
+    if (chip.plan) {
+      const el = document.getElementById('soap-plan');
+      if (el) el.value = chip.plan;
+    }
+    if (chip.drugs && chip.drugs.length) {
+      const tbody = document.getElementById('prescription-rows');
+      if (tbody) {
+        tbody.innerHTML = '';
+        chip.drugs.forEach(() => addPrescriptionRow());
+        const rows = tbody.querySelectorAll('tr');
+        chip.drugs.forEach((d, i) => {
+          if (!rows[i]) return;
+          const inputs = rows[i].querySelectorAll('[data-field]');
+          inputs.forEach(inp => {
+            const f = inp.getAttribute('data-field');
+            if (f === 'drug') inp.value = d.drug || '';
+            if (f === 'dose') inp.value = d.dose || '';
+            if (f === 'frequency') {
+              // Try to match select option
+              const opt = Array.from(inp.options || []).find(o => o.value === d.frequency || o.text === d.frequency);
+              if (opt) inp.value = opt.value;
+            }
+            if (f === 'duration') inp.value = d.duration || '';
+            if (f === 'amount') inp.value = d.amount || 0;
+          });
+        });
+      }
+    }
+  }
+
+  // ── Handle staff sign out ─────────────────────────────────────
+  function handleSignOut() {
+    if (typeof window.appSignOut === 'function') {
+      window.appSignOut();
+    } else {
+      showZone('public');
+      window.scrollTo(0, 0);
+    }
+  }
+
+  // ── Contact vendor via WhatsApp ───────────────────────────────
+  function contactVendorWhatsApp() {
+    const vendorWa = (window.CLINIC_CONFIG && window.CLINIC_CONFIG.vendorWhatsapp) ? window.CLINIC_CONFIG.vendorWhatsapp : '2348000000000';
+    const clinicName = (window.CLINIC_CONFIG && window.CLINIC_CONFIG.name) ? window.CLINIC_CONFIG.name : 'Our Clinic';
+    const msg = encodeURIComponent(`Hello AQ MedTech Support, the subscription for ${clinicName} appears to have been suspended. Please assist us to restore access urgently. Thank you.`);
+    window.open(`https://wa.me/${vendorWa}?text=${msg}`, '_blank');
+  }
+
+  // ── Locum credentials generator ───────────────────────────────
+  function generateLocumCredentials() {
+    const name = document.getElementById('locum-doctor-name').value.trim();
+    if (!name) { alert('Please enter the doctor\'s full name.'); return; }
+    if (typeof window.handleGenerateLocum === 'function') {
+      window.handleGenerateLocum(name);
+    } else {
+      // Fallback demo
+      const slug = name.toLowerCase().replace(/[^a-z0-9]/g,'').substring(0,8);
+      const pass = 'Loc@' + Math.floor(1000 + Math.random() * 9000);
+      const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      document.getElementById('locum-cred-email').textContent = `locum.${slug}@sunriseclinic.ng`;
+      document.getElementById('locum-cred-password').textContent = pass;
+      document.getElementById('locum-cred-expiry').textContent = expiry.toLocaleString('en-NG');
+      document.getElementById('locum-credentials').classList.remove('hidden');
+    }
+  }
+
+  function sendLocumCredentialsWhatsApp() {
+    const email = document.getElementById('locum-cred-email').textContent;
+    const pass = document.getElementById('locum-cred-password').textContent;
+    const expiry = document.getElementById('locum-cred-expiry').textContent;
+    const clinicName = (window.CLINIC_CONFIG && window.CLINIC_CONFIG.name) ? window.CLINIC_CONFIG.name : 'Sunrise Family Clinic';
+    const msg = encodeURIComponent(`Hello Doctor,\n\nHere are your 24-hour temporary login credentials for ${clinicName} EMR:\n\nEmail: ${email}\nPassword: ${pass}\nExpires: ${expiry}\n\nPlease log in at the clinic website. These credentials are valid for 24 hours only.\n\n— ${clinicName} Management`);
+    window.open(`https://wa.me/?text=${msg}`, '_blank');
+  }
+
+  // ── Complete consultation ──────────────────────────────────────
+  function completeConsultation() {
+    if (typeof window.handleCompleteConsultation === 'function') {
+      window.handleCompleteConsultation();
+    }
+  }
+
+  // ── View refill list ──────────────────────────────────────────
+  function viewRefillList() {
+    if (typeof window.handleViewRefillList === 'function') {
+      window.handleViewRefillList();
+    }
+  }
+
+  // ── Period buttons (MD Dashboard) ────────────────────────────
+  function initDirectorDashboard(period) {
+    ['today','week','month'].forEach(p => {
+      const btn = document.getElementById('period-' + p);
+      if (btn) btn.classList.toggle('active-period', p === period);
+    });
+    if (typeof window.loadDirectorDashboard === 'function') {
+      window.loadDirectorDashboard(period);
+    }
+  }
+
+  // ── Export CSV ────────────────────────────────────────────────
+  function exportCSV() {
+    if (typeof window.handleExportCSV === 'function') {
+      window.handleExportCSV();
+    } else {
+      alert('CSV export will be available once the EMR system is fully configured.');
+    }
+  }
+
+  // ── Register new clinic (Super Admin) ────────────────────────
+  function registerNewClinic() {
+    if (typeof window.handleRegisterClinic === 'function') {
+      window.handleRegisterClinic();
+    }
+  }
+
+  // ── Init Super Admin table ───────────────────────────────────
+  function initSuperAdmin() {
+    if (typeof window.loadSuperAdminClinics === 'function') {
+      window.loadSuperAdminClinics();
+    }
+  }
+
+  // ── Handle Paper Folder Snap + Compression ────────────────────
+  function handlePaperFolderSnap(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_W = 1000;
+        const scale = Math.min(1, MAX_W / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.filter = 'grayscale(100%) contrast(1.3) brightness(1.1)';
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const compressed = canvas.toDataURL('image/jpeg', 0.5);
+        const thumb = document.getElementById('paper-folder-thumb');
+        thumb.src = compressed;
+        const zoomImg = document.getElementById('zoom-photo-img');
+        if (zoomImg) zoomImg.src = compressed;
+        document.getElementById('paper-folder-preview').classList.remove('hidden');
+        // Store compressed image for triage
+        window._pendingPaperFolderPhoto = compressed;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ── Android PWA install prompt ────────────────────────────────
+  let deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    document.getElementById('android-install-btn').classList.remove('hidden');
+  });
+  function triggerAndroidInstall() {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.then(() => {
+        deferredInstallPrompt = null;
+        document.getElementById('android-install-btn').classList.add('hidden');
+      });
+    }
+  }
+
+  // ── iOS install banner detection ──────────────────────────────
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isInStandaloneMode = window.navigator.standalone;
+  if (isIos && !isInStandaloneMode) {
+    setTimeout(() => {
+      document.getElementById('ios-install-banner').classList.remove('hidden');
+    }, 3000);
+  }
+
+  // ── 1-Click Demo Fill ───────────────────────────────────────
+  function fillDemoLogin(role) {
+    if (typeof window.fillDemoLogin === 'function' && window.fillDemoLogin !== fillDemoLogin) {
+      window.fillDemoLogin(role);
+      return;
+    }
+    const emailInput = document.getElementById('auth-email');
+    const passInput = document.getElementById('auth-password');
+    const errDiv = document.getElementById('auth-error');
+    if (errDiv) errDiv.classList.add('hidden');
+    const creds = {
+      doctor: { email: 'doctor@aqmedtech.com', pass: 'DoctorPass2025!' },
+      receptionist: { email: 'reception@aqmedtech.com', pass: 'ReceptPass2025!' },
+      cashier: { email: 'cashier@aqmedtech.com', pass: 'CashPass2025!' },
+      director: { email: 'director@aqmedtech.com', pass: 'DirectorPass2025!' }
+    };
+    if (creds[role] && emailInput && passInput) {
+      emailInput.value = creds[role].email;
+      passInput.value = creds[role].pass;
+    }
+  }
+
+  // ── Handle staff login ────────────────────────────────────────
+  function handleStaffLogin(e) {
+    e.preventDefault();
+    if (typeof window.appHandleLogin === 'function') {
+      window.appHandleLogin(e);
+    } else {
+      // Fallback demo
+      const loading = document.getElementById('auth-loading');
+      const btn = document.getElementById('btn-auth-submit');
+      btn.disabled = true;
+      loading.classList.remove('hidden');
+      setTimeout(() => {
+        loading.classList.add('hidden');
+        btn.disabled = false;
+        const errorDiv = document.getElementById('auth-error');
+        errorDiv.textContent = 'Staff authentication requires app.js to be configured with Supabase credentials.';
+        errorDiv.classList.remove('hidden');
+      }, 1500);
+    }
+  }
+
+  // ── Service Worker Registration ───────────────────────────────
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('SW registered:', reg.scope))
+        .catch(err => console.warn('SW registration failed:', err));
+    });
+  }
+
+  // ── Set date input min to today ───────────────────────────────
+  const today = new Date().toISOString().split('T')[0];
+  const bookDate = document.getElementById('book-date');
+  if (bookDate) bookDate.min = today;
+</script>
+<script src="app.js" defer></script>
+</body>
+</html>
